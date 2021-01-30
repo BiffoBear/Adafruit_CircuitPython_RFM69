@@ -260,9 +260,7 @@ class RFM69:
         # Check the version of the chip.
         version = self._read_u8(_REG_VERSION)
         if version != 0x24:
-            raise RuntimeError(
-                "Failed to find RFM69 with expected version, check wiring!"
-            )
+            raise RuntimeError("No RFM69")
         self.idle()  # Enter idle state.
         # Setup the chip in a similar way to the RadioHead RFM69 library.
         # Set FIFO TX condition to not empty and the default FIFO threshold to 15.
@@ -473,7 +471,7 @@ class RFM69:
 #         # Wait for mode to change by polling interrupt bit.
 #         while not self.mode_ready:
 #             pass
-
+# 
 #     @property
 #     def sync_word(self):
 #         """The synchronization word value.  This is a byte string up to 8 bytes long (64 bits)
@@ -491,21 +489,21 @@ class RFM69:
 #         sync_word = bytearray(sync_word_length)
 #         self._read_into(_REG_SYNC_VALUE1, sync_word)
 #         return sync_word
-
+# 
 #     @sync_word.setter
-    def sync_word(self, val):
-        # Handle disabling sync word when None value is set.
-        if val is None:
-            self.sync_on = 0
-        else:
-            # Check sync word is at most 8 bytes.
-            assert 1 <= len(val) <= 8
-            # Update the value, size and turn on the sync word.
-            self._write_from(_REG_SYNC_VALUE1, val)
-            self.sync_size = len(val) - 1  # Again sync word size is offset by
-            # 1 according to datasheet.
-            self.sync_on = 1
-
+#     def sync_word(self, val):
+#         # Handle disabling sync word when None value is set.
+#         if val is None:
+#             self.sync_on = 0
+#         else:
+#             # Check sync word is at most 8 bytes.
+#             assert 1 <= len(val) <= 8
+#             # Update the value, size and turn on the sync word.
+#             self._write_from(_REG_SYNC_VALUE1, val)
+#             self.sync_size = len(val) - 1  # Again sync word size is offset by
+#             # 1 according to datasheet.
+#             self.sync_on = 1
+# 
 #     @property
 #     def preamble_length(self):
 #         """The length of the preamble for sent and received packets, an unsigned 16-bit value.
@@ -515,13 +513,13 @@ class RFM69:
 #         msb = self._read_u8(_REG_PREAMBLE_MSB)
 #         lsb = self._read_u8(_REG_PREAMBLE_LSB)
 #         return ((msb << 8) | lsb) & 0xFFFF
-
+# 
 #     @preamble_length.setter
-    def preamble_length(self, val):
-        assert 0 <= val <= 65535
-        self._write_u8(_REG_PREAMBLE_MSB, (val >> 8) & 0xFF)
-        self._write_u8(_REG_PREAMBLE_LSB, val & 0xFF)
-
+#     def preamble_length(self, val):
+#         assert 0 <= val <= 65535
+#         self._write_u8(_REG_PREAMBLE_MSB, (val >> 8) & 0xFF)
+#         self._write_u8(_REG_PREAMBLE_LSB, val & 0xFF)
+# 
 #     @property
 #     def frequency_mhz(self):
 #         """The frequency of the radio in Megahertz. Only the allowed values for your radio must be
@@ -536,20 +534,20 @@ class RFM69:
 #         frf = ((msb << 16) | (mid << 8) | lsb) & 0xFFFFFF
 #         frequency = (frf * _FSTEP) / 1000000.0
 #         return frequency
-
+# 
 #     @frequency_mhz.setter
-    def frequency_mhz(self, val):
-        assert 290 <= val <= 1020
-        # Calculate FRF register 24-bit value using section 6.2 of the datasheet.
-        frf = int((val * 1000000.0) / _FSTEP) & 0xFFFFFF
-        # Extract byte values and update registers.
-        msb = frf >> 16
-        mid = (frf >> 8) & 0xFF
-        lsb = frf & 0xFF
-        self._write_u8(_REG_FRF_MSB, msb)
-        self._write_u8(_REG_FRF_MID, mid)
-        self._write_u8(_REG_FRF_LSB, lsb)
-
+#     def frequency_mhz(self, val):
+#         assert 290 <= val <= 1020
+#         # Calculate FRF register 24-bit value using section 6.2 of the datasheet.
+#         frf = int((val * 1000000.0) / _FSTEP) & 0xFFFFFF
+#         # Extract byte values and update registers.
+#         msb = frf >> 16
+#         mid = (frf >> 8) & 0xFF
+#         lsb = frf & 0xFF
+#         self._write_u8(_REG_FRF_MSB, msb)
+#         self._write_u8(_REG_FRF_MID, mid)
+#         self._write_u8(_REG_FRF_LSB, lsb)
+# 
 #     @property
 #     def encryption_key(self):
 #         """The AES encryption key used to encrypt and decrypt packets by the chip. This can be set
@@ -564,18 +562,18 @@ class RFM69:
 #         key = bytearray(16)
 #         self._read_into(_REG_AES_KEY1, key)
 #         return key
-
+# 
 #     @encryption_key.setter
-    def encryption_key(self, val):
-        # Handle if unsetting the encryption key (None value).
-        if val is None:
-            self.aes_on = 0
-        else:
-            # Set the encryption key and enable encryption.
-            assert len(val) == 16
-            self._write_from(_REG_AES_KEY1, val)
-            self.aes_on = 1
-
+#     def encryption_key(self, val):
+#         # Handle if unsetting the encryption key (None value).
+#         if val is None:
+#             self.aes_on = 0
+#         else:
+#             # Set the encryption key and enable encryption.
+#             assert len(val) == 16
+#             self._write_from(_REG_AES_KEY1, val)
+#             self.aes_on = 1
+# 
 #     @property
 #     def tx_power(self):
 #         """The transmit power in dBm. Can be set to a value from -2 to 20 for high power devices
@@ -602,42 +600,42 @@ class RFM69:
 #         raise RuntimeError("Power amplifiers in unknown state!")
 
 #     @tx_power.setter
-    def tx_power(self, val):
-        val = int(val)
-        # Determine power amplifier and output power values depending on
-        # high power state and requested power.
-        pa_0_on = 0
-        pa_1_on = 0
-        pa_2_on = 0
-        output_power = 0
-        if self.high_power:
-            # Handle high power mode.
-            assert -2 <= val <= 20
-            if val <= 13:
-                pa_1_on = 1
-                output_power = val + 18
-            elif 13 < val <= 17:
-                pa_1_on = 1
-                pa_2_on = 1
-                output_power = val + 14
-            else:  # power >= 18 dBm
-                # Note this also needs PA boost enabled separately!
-                pa_1_on = 1
-                pa_2_on = 1
-                output_power = val + 11
-        else:
-            # Handle non-high power mode.
-            assert -18 <= val <= 13
-            # Enable only power amplifier 0 and set output power.
-            pa_0_on = 1
-            output_power = val + 18
-        # Set power amplifiers and output power as computed above.
-        self.pa_0_on = pa_0_on
-        self.pa_1_on = pa_1_on
-        self.pa_2_on = pa_2_on
-        self.output_power = output_power
-        self._tx_power = val
-
+#     def tx_power(self, val):
+#         val = int(val)
+#         # Determine power amplifier and output power values depending on
+#         # high power state and requested power.
+#         pa_0_on = 0
+#         pa_1_on = 0
+#         pa_2_on = 0
+#         output_power = 0
+#         if self.high_power:
+#             # Handle high power mode.
+#             assert -2 <= val <= 20
+#             if val <= 13:
+#                 pa_1_on = 1
+#                 output_power = val + 18
+#             elif 13 < val <= 17:
+#                 pa_1_on = 1
+#                 pa_2_on = 1
+#                 output_power = val + 14
+#             else:  # power >= 18 dBm
+#                 # Note this also needs PA boost enabled separately!
+#                 pa_1_on = 1
+#                 pa_2_on = 1
+#                 output_power = val + 11
+#         else:
+#             # Handle non-high power mode.
+#             assert -18 <= val <= 13
+#             # Enable only power amplifier 0 and set output power.
+#             pa_0_on = 1
+#             output_power = val + 18
+#         # Set power amplifiers and output power as computed above.
+#         self.pa_0_on = pa_0_on
+#         self.pa_1_on = pa_1_on
+#         self.pa_2_on = pa_2_on
+#         self.output_power = output_power
+#         self._tx_power = val
+# 
 #     @property
 #     def rssi(self):
 #         """The received strength indicator (in dBm).
@@ -658,13 +656,13 @@ class RFM69:
 #         return _FXOSC / ((msb << 8) | lsb)
 
 #     @bitrate.setter
-    def bitrate(self, val):
-        assert (_FXOSC / 65535) <= val <= 32000000.0
-        # Round up to the next closest bit-rate value with addition of 0.5.
-        bitrate = int((_FXOSC / val) + 0.5) & 0xFFFF
-        self._write_u8(_REG_BITRATE_MSB, bitrate >> 8)
-        self._write_u8(_REG_BITRATE_LSB, bitrate & 0xFF)
-
+#     def bitrate(self, val):
+#         assert (_FXOSC / 65535) <= val <= 32000000.0
+#         # Round up to the next closest bit-rate value with addition of 0.5.
+#         bitrate = int((_FXOSC / val) + 0.5) & 0xFFFF
+#         self._write_u8(_REG_BITRATE_MSB, bitrate >> 8)
+#         self._write_u8(_REG_BITRATE_LSB, bitrate & 0xFF)
+# 
 #     @property
 #     def frequency_deviation(self):
 #         """The frequency deviation in Hertz."""
