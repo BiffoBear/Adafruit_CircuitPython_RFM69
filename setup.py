@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
+# SPDX-FileCopyrightText: 2021 Martin Stephens
 #
 # SPDX-License-Identifier: MIT
 
@@ -23,17 +23,17 @@ with open(path.join(here, "README.rst"), encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
-    name="adafruit-circuitpython-rfm69",
+    name="martin-circuitpython-rfm69-lite",
     use_scm_version=True,
     setup_requires=["setuptools_scm"],
-    description="CircuitPython library for RFM69 packet radio.",
+    description="CircuitPython library for RFM69 packet radio send only.",
     long_description=long_description,
     long_description_content_type="text/x-rst",
     # The project's main homepage.
-    url="https://github.com/adafruit/Adafruit_CircuitPython_RFM69",
+    url="https://github.com/BiffiBear/Adafruit_CircuitPython_RFM69",
     # Author details
-    author="Adafruit Industries",
-    author_email="circuitpython@adafruit.com",
+    author="Martin Stephens",
+    author_email="martin@martinstephens.net",
     install_requires=["Adafruit-Blinka", "adafruit-circuitpython-busdevice"],
     # Choose your license
     license="MIT",
@@ -52,5 +52,5 @@ setup(
     keywords="adafruit rfm69 packet radio hardware micropython circuitpython",
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    py_modules=["adafruit_rfm69"],
+    py_modules=["martin_rfm69_lite"],
 )

@@ -3,20 +3,17 @@
 # SPDX-License-Identifier: MIT
 
 """
-`adafruit_rfm69`
+`martin_rfm69_lite`
 ====================================================
 
-CircuitPython RFM69 packet radio module. This supports basic RadioHead-compatible sending and
-receiving of packets with RFM69 series radios (433/915Mhz).
+CircuitPython RFM69 packet radio module. This supports basic RadioHead-compatible sending of 
+packets with RFM69 series radios (433/915Mhz).
 
 .. warning:: This is NOT for LoRa radios!
 
-.. note:: This is a 'best effort' at receiving data using pure Python code--there is not interrupt
-    support so you might lose packets if they're sent too quickly for the board to process them.
-    You will have the most luck using this in simple low bandwidth scenarios like sending and
-    receiving a 60 byte packet at a time--don't try to receive many kilobytes of data at a time!
+.. note:: This is a send only library to it will fit on m0 express boards.
 
-* Author(s): Tony DiCola, Jerry Needell
+* Author(s): Tony DiCola, Jerry Needell, Martin Stephens
 
 Implementation Notes
 --------------------
@@ -412,18 +409,18 @@ class RFM69:
         """Enter sleep mode."""
         self.operation_mode = SLEEP_MODE
 
-    def listen(self):
-        """Listen for packets to be received by the chip.  Use :py:func:`receive` to listen, wait
-        and retrieve packets as they're available.
-        """
-        # Like RadioHead library, turn off high power boost if enabled.
-        if self._tx_power >= 18:
-            self._write_u8(_REG_TEST_PA1, _TEST_PA1_NORMAL)
-            self._write_u8(_REG_TEST_PA2, _TEST_PA2_NORMAL)
-        # Enable payload ready interrupt for D0 line.
-        self.dio_0_mapping = 0b01
-        # Enter RX mode (will clear FIFO!).
-        self.operation_mode = RX_MODE
+#     def listen(self):
+#         """Listen for packets to be received by the chip.  Use :py:func:`receive` to listen, wait
+#         and retrieve packets as they're available.
+#         """
+#         # Like RadioHead library, turn off high power boost if enabled.
+#         if self._tx_power >= 18:
+#             self._write_u8(_REG_TEST_PA1, _TEST_PA1_NORMAL)
+#             self._write_u8(_REG_TEST_PA2, _TEST_PA2_NORMAL)
+#         # Enable payload ready interrupt for D0 line.
+#         self.dio_0_mapping = 0b01
+#         # Enter RX mode (will clear FIFO!).
+#         self.operation_mode = RX_MODE
 
     def transmit(self):
         """Transmit a packet which is queued in the FIFO.  This is a low level function for
@@ -439,63 +436,63 @@ class RFM69:
         # Enter TX mode (will clear FIFO!).
         self.operation_mode = TX_MODE
 
-    @property
-    def temperature(self):
-        """The internal temperature of the chip in degrees Celsius. Be warned this is not
-        calibrated or very accurate.
+#     @property
+#     def temperature(self):
+#         """The internal temperature of the chip in degrees Celsius. Be warned this is not
+#         calibrated or very accurate.
+# 
+#         .. warning:: Reading this will STOP any receiving/sending that might be happening!
+#         """
+#         # Start a measurement then poll the measurement finished bit.
+#         self.temp_start = 1
+#         while self.temp_running > 0:
+#             pass
+#         # Grab the temperature value and convert it to Celsius.
+#         # This uses the same observed value formula from the Radiohead library.
+#         temp = self._read_u8(_REG_TEMP2)
+#         return 166.0 - temp
 
-        .. warning:: Reading this will STOP any receiving/sending that might be happening!
-        """
-        # Start a measurement then poll the measurement finished bit.
-        self.temp_start = 1
-        while self.temp_running > 0:
-            pass
-        # Grab the temperature value and convert it to Celsius.
-        # This uses the same observed value formula from the Radiohead library.
-        temp = self._read_u8(_REG_TEMP2)
-        return 166.0 - temp
+#     @property
+#     def operation_mode(self):
+#         """The operation mode value.  Unless you're manually controlling the chip you shouldn't
+#         change the operation_mode with this property as other side-effects are required for
+#         changing logical modes--use :py:func:`idle`, :py:func:`sleep`, :py:func:`transmit`,
+#         :py:func:`listen` instead to signal intent for explicit logical modes.
+#         """
+#         op_mode = self._read_u8(_REG_OP_MODE)
+#         return (op_mode >> 2) & 0b111
 
-    @property
-    def operation_mode(self):
-        """The operation mode value.  Unless you're manually controlling the chip you shouldn't
-        change the operation_mode with this property as other side-effects are required for
-        changing logical modes--use :py:func:`idle`, :py:func:`sleep`, :py:func:`transmit`,
-        :py:func:`listen` instead to signal intent for explicit logical modes.
-        """
-        op_mode = self._read_u8(_REG_OP_MODE)
-        return (op_mode >> 2) & 0b111
+#     @operation_mode.setter
+#     def operation_mode(self, val):
+#         assert 0 <= val <= 4
+#         # Set the mode bits inside the operation mode register.
+#         op_mode = self._read_u8(_REG_OP_MODE)
+#         op_mode &= 0b11100011
+#         op_mode |= val << 2
+#         self._write_u8(_REG_OP_MODE, op_mode)
+#         # Wait for mode to change by polling interrupt bit.
+#         while not self.mode_ready:
+#             pass
 
-    @operation_mode.setter
-    def operation_mode(self, val):
-        assert 0 <= val <= 4
-        # Set the mode bits inside the operation mode register.
-        op_mode = self._read_u8(_REG_OP_MODE)
-        op_mode &= 0b11100011
-        op_mode |= val << 2
-        self._write_u8(_REG_OP_MODE, op_mode)
-        # Wait for mode to change by polling interrupt bit.
-        while not self.mode_ready:
-            pass
+#     @property
+#     def sync_word(self):
+#         """The synchronization word value.  This is a byte string up to 8 bytes long (64 bits)
+#         which indicates the synchronization word for transmitted and received packets. Any
+#         received packet which does not include this sync word will be ignored. The default value
+#         is 0x2D, 0xD4 which matches the RadioHead RFM69 library. Setting a value of None will
+#         disable synchronization word matching entirely.
+#         """
+#         # Handle when sync word is disabled..
+#         if not self.sync_on:
+#             return None
+#         # Sync word is not disabled so read the current value.
+#         sync_word_length = self.sync_size + 1  # Sync word size is offset by 1
+#         # according to datasheet.
+#         sync_word = bytearray(sync_word_length)
+#         self._read_into(_REG_SYNC_VALUE1, sync_word)
+#         return sync_word
 
-    @property
-    def sync_word(self):
-        """The synchronization word value.  This is a byte string up to 8 bytes long (64 bits)
-        which indicates the synchronization word for transmitted and received packets. Any
-        received packet which does not include this sync word will be ignored. The default value
-        is 0x2D, 0xD4 which matches the RadioHead RFM69 library. Setting a value of None will
-        disable synchronization word matching entirely.
-        """
-        # Handle when sync word is disabled..
-        if not self.sync_on:
-            return None
-        # Sync word is not disabled so read the current value.
-        sync_word_length = self.sync_size + 1  # Sync word size is offset by 1
-        # according to datasheet.
-        sync_word = bytearray(sync_word_length)
-        self._read_into(_REG_SYNC_VALUE1, sync_word)
-        return sync_word
-
-    @sync_word.setter
+#     @sync_word.setter
     def sync_word(self, val):
         # Handle disabling sync word when None value is set.
         if val is None:
@@ -509,38 +506,38 @@ class RFM69:
             # 1 according to datasheet.
             self.sync_on = 1
 
-    @property
-    def preamble_length(self):
-        """The length of the preamble for sent and received packets, an unsigned 16-bit value.
-        Received packets must match this length or they are ignored! Set to 4 to match the
-        RadioHead RFM69 library.
-        """
-        msb = self._read_u8(_REG_PREAMBLE_MSB)
-        lsb = self._read_u8(_REG_PREAMBLE_LSB)
-        return ((msb << 8) | lsb) & 0xFFFF
+#     @property
+#     def preamble_length(self):
+#         """The length of the preamble for sent and received packets, an unsigned 16-bit value.
+#         Received packets must match this length or they are ignored! Set to 4 to match the
+#         RadioHead RFM69 library.
+#         """
+#         msb = self._read_u8(_REG_PREAMBLE_MSB)
+#         lsb = self._read_u8(_REG_PREAMBLE_LSB)
+#         return ((msb << 8) | lsb) & 0xFFFF
 
-    @preamble_length.setter
+#     @preamble_length.setter
     def preamble_length(self, val):
         assert 0 <= val <= 65535
         self._write_u8(_REG_PREAMBLE_MSB, (val >> 8) & 0xFF)
         self._write_u8(_REG_PREAMBLE_LSB, val & 0xFF)
 
-    @property
-    def frequency_mhz(self):
-        """The frequency of the radio in Megahertz. Only the allowed values for your radio must be
-        specified (i.e. 433 vs. 915 mhz)!
-        """
-        # FRF register is computed from the frequency following the datasheet.
-        # See section 6.2 and FRF register description.
-        # Read bytes of FRF register and assemble into a 24-bit unsigned value.
-        msb = self._read_u8(_REG_FRF_MSB)
-        mid = self._read_u8(_REG_FRF_MID)
-        lsb = self._read_u8(_REG_FRF_LSB)
-        frf = ((msb << 16) | (mid << 8) | lsb) & 0xFFFFFF
-        frequency = (frf * _FSTEP) / 1000000.0
-        return frequency
+#     @property
+#     def frequency_mhz(self):
+#         """The frequency of the radio in Megahertz. Only the allowed values for your radio must be
+#         specified (i.e. 433 vs. 915 mhz)!
+#         """
+#         # FRF register is computed from the frequency following the datasheet.
+#         # See section 6.2 and FRF register description.
+#         # Read bytes of FRF register and assemble into a 24-bit unsigned value.
+#         msb = self._read_u8(_REG_FRF_MSB)
+#         mid = self._read_u8(_REG_FRF_MID)
+#         lsb = self._read_u8(_REG_FRF_LSB)
+#         frf = ((msb << 16) | (mid << 8) | lsb) & 0xFFFFFF
+#         frequency = (frf * _FSTEP) / 1000000.0
+#         return frequency
 
-    @frequency_mhz.setter
+#     @frequency_mhz.setter
     def frequency_mhz(self, val):
         assert 290 <= val <= 1020
         # Calculate FRF register 24-bit value using section 6.2 of the datasheet.
@@ -553,22 +550,22 @@ class RFM69:
         self._write_u8(_REG_FRF_MID, mid)
         self._write_u8(_REG_FRF_LSB, lsb)
 
-    @property
-    def encryption_key(self):
-        """The AES encryption key used to encrypt and decrypt packets by the chip. This can be set
-        to None to disable encryption (the default), otherwise it must be a 16 byte long byte
-        string which defines the key (both the transmitter and receiver must use the same key
-        value).
-        """
-        # Handle if encryption is disabled.
-        if self.aes_on == 0:
-            return None
-        # Encryption is enabled so read the key and return it.
-        key = bytearray(16)
-        self._read_into(_REG_AES_KEY1, key)
-        return key
+#     @property
+#     def encryption_key(self):
+#         """The AES encryption key used to encrypt and decrypt packets by the chip. This can be set
+#         to None to disable encryption (the default), otherwise it must be a 16 byte long byte
+#         string which defines the key (both the transmitter and receiver must use the same key
+#         value).
+#         """
+#         # Handle if encryption is disabled.
+#         if self.aes_on == 0:
+#             return None
+#         # Encryption is enabled so read the key and return it.
+#         key = bytearray(16)
+#         self._read_into(_REG_AES_KEY1, key)
+#         return key
 
-    @encryption_key.setter
+#     @encryption_key.setter
     def encryption_key(self, val):
         # Handle if unsetting the encryption key (None value).
         if val is None:
@@ -579,32 +576,32 @@ class RFM69:
             self._write_from(_REG_AES_KEY1, val)
             self.aes_on = 1
 
-    @property
-    def tx_power(self):
-        """The transmit power in dBm. Can be set to a value from -2 to 20 for high power devices
-        (RFM69HCW, high_power=True) or -18 to 13 for low power devices. Only integer power
-        levels are actually set (i.e. 12.5 will result in a value of 12 dBm).
-        """
-        # Follow table 10 truth table from the datasheet for determining power
-        # level from the individual PA level bits and output power register.
-        pa0 = self.pa_0_on
-        pa1 = self.pa_1_on
-        pa2 = self.pa_2_on
-        if pa0 and not pa1 and not pa2:
-            # -18 to 13 dBm range
-            return -18 + self.output_power
-        if not pa0 and pa1 and not pa2:
-            # -2 to 13 dBm range
-            return -18 + self.output_power
-        if not pa0 and pa1 and pa2 and not self.high_power:
-            # 2 to 17 dBm range
-            return -14 + self.output_power
-        if not pa0 and pa1 and pa2 and self.high_power:
-            # 5 to 20 dBm range
-            return -11 + self.output_power
-        raise RuntimeError("Power amplifiers in unknown state!")
+#     @property
+#     def tx_power(self):
+#         """The transmit power in dBm. Can be set to a value from -2 to 20 for high power devices
+#         (RFM69HCW, high_power=True) or -18 to 13 for low power devices. Only integer power
+#         levels are actually set (i.e. 12.5 will result in a value of 12 dBm).
+#         """
+#         # Follow table 10 truth table from the datasheet for determining power
+#         # level from the individual PA level bits and output power register.
+#         pa0 = self.pa_0_on
+#         pa1 = self.pa_1_on
+#         pa2 = self.pa_2_on
+#         if pa0 and not pa1 and not pa2:
+#             # -18 to 13 dBm range
+#             return -18 + self.output_power
+#         if not pa0 and pa1 and not pa2:
+#             # -2 to 13 dBm range
+#             return -18 + self.output_power
+#         if not pa0 and pa1 and pa2 and not self.high_power:
+#             # 2 to 17 dBm range
+#             return -14 + self.output_power
+#         if not pa0 and pa1 and pa2 and self.high_power:
+#             # 5 to 20 dBm range
+#             return -11 + self.output_power
+#         raise RuntimeError("Power amplifiers in unknown state!")
 
-    @tx_power.setter
+#     @tx_power.setter
     def tx_power(self, val):
         val = int(val)
         # Determine power amplifier and output power values depending on
@@ -641,24 +638,24 @@ class RFM69:
         self.output_power = output_power
         self._tx_power = val
 
-    @property
-    def rssi(self):
-        """The received strength indicator (in dBm).
-        May be inaccuate if not read immediatey. last_rssi contains the value read immediately
-        receipt of the last packet.
-        """
-        # Read RSSI register and convert to value using formula in datasheet.
-        return -self._read_u8(_REG_RSSI_VALUE) / 2.0
+#     @property
+#     def rssi(self):
+#         """The received strength indicator (in dBm).
+#         May be inaccuate if not read immediatey. last_rssi contains the value read immediately
+#         receipt of the last packet.
+#         """
+#         # Read RSSI register and convert to value using formula in datasheet.
+#         return -self._read_u8(_REG_RSSI_VALUE) / 2.0
 
-    @property
-    def bitrate(self):
-        """The modulation bitrate in bits/second (or chip rate if Manchester encoding is enabled).
-        Can be a value from ~489 to 32mbit/s, but see the datasheet for the exact supported
-        values.
-        """
-        msb = self._read_u8(_REG_BITRATE_MSB)
-        lsb = self._read_u8(_REG_BITRATE_LSB)
-        return _FXOSC / ((msb << 8) | lsb)
+#     @property
+#     def bitrate(self):
+#         """The modulation bitrate in bits/second (or chip rate if Manchester encoding is enabled).
+#         Can be a value from ~489 to 32mbit/s, but see the datasheet for the exact supported
+#         values.
+#         """
+#         msb = self._read_u8(_REG_BITRATE_MSB)
+#         lsb = self._read_u8(_REG_BITRATE_LSB)
+#         return _FXOSC / ((msb << 8) | lsb)
 
     @bitrate.setter
     def bitrate(self, val):
@@ -668,20 +665,20 @@ class RFM69:
         self._write_u8(_REG_BITRATE_MSB, bitrate >> 8)
         self._write_u8(_REG_BITRATE_LSB, bitrate & 0xFF)
 
-    @property
-    def frequency_deviation(self):
-        """The frequency deviation in Hertz."""
-        msb = self._read_u8(_REG_FDEV_MSB)
-        lsb = self._read_u8(_REG_FDEV_LSB)
-        return _FSTEP * ((msb << 8) | lsb)
+#     @property
+#     def frequency_deviation(self):
+#         """The frequency deviation in Hertz."""
+#         msb = self._read_u8(_REG_FDEV_MSB)
+#         lsb = self._read_u8(_REG_FDEV_LSB)
+#         return _FSTEP * ((msb << 8) | lsb)
 
-    @frequency_deviation.setter
-    def frequency_deviation(self, val):
-        assert 0 <= val <= (_FSTEP * 16383)  # fdev is a 14-bit unsigned value
-        # Round up to the next closest integer value with addition of 0.5.
-        fdev = int((val / _FSTEP) + 0.5) & 0x3FFF
-        self._write_u8(_REG_FDEV_MSB, fdev >> 8)
-        self._write_u8(_REG_FDEV_LSB, fdev & 0xFF)
+#     @frequency_deviation.setter
+#     def frequency_deviation(self, val):
+#         assert 0 <= val <= (_FSTEP * 16383)  # fdev is a 14-bit unsigned value
+#         # Round up to the next closest integer value with addition of 0.5.
+#         fdev = int((val / _FSTEP) + 0.5) & 0x3FFF
+#         self._write_u8(_REG_FDEV_MSB, fdev >> 8)
+#         self._write_u8(_REG_FDEV_LSB, fdev & 0xFF)
 
     def packet_sent(self):
         """Transmit status"""
