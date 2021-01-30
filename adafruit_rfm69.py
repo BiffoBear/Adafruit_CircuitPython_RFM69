@@ -657,7 +657,7 @@ class RFM69:
 #         lsb = self._read_u8(_REG_BITRATE_LSB)
 #         return _FXOSC / ((msb << 8) | lsb)
 
-    @bitrate.setter
+#     @bitrate.setter
     def bitrate(self, val):
         assert (_FXOSC / 65535) <= val <= 32000000.0
         # Round up to the next closest bit-rate value with addition of 0.5.
